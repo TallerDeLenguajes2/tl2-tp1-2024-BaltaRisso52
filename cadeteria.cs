@@ -1,16 +1,42 @@
+using System.Text.Json.Serialization;
 public class Cadeteria
 {
     private string nombre;
     private string telefono;
     private List<Cadete> listaCadetes;
-    private List<Pedido> listaPedidosNuevos;
+    private List<Pedido> listaPedidos;
+
+
+    [JsonConstructor]
+    public Cadeteria(string nombre, string telefono)
+    {
+        this.nombre = nombre;
+        this.telefono = telefono;
+        this.listaCadetes = new List<Cadete>();
+        this.listaPedidos = new List<Pedido>();
+    }
+
+    
 
     public Cadeteria(string nombre, string telefono, List<Cadete> lista)
     {
         this.nombre = nombre;
         this.telefono = telefono;
         this.listaCadetes = lista;
-        this.listaPedidosNuevos = new List<Pedido>();
+        this.listaPedidos = new List<Pedido>();
+    }
+
+    [JsonPropertyName("nombre")]
+    public string Nombre {get=> nombre; set=> nombre = value;}
+    [JsonPropertyName("telefono")]
+    public string Telefono {get=> telefono; set=> telefono = value;}
+
+
+
+    public List<Pedido> ListaPedidos { get => listaPedidos; }
+
+    public void agregarCadetes(List<Cadete> cadetes){
+        this.listaCadetes = cadetes;
     }
 
     public string leerEntradaConValidacion(string msj, string error)
@@ -32,6 +58,11 @@ public class Cadeteria
 
     }
 
+    public int JornalACobrar(int id)
+    {
+        return listaPedidos.Count(p => p.Estado == Estado.Entregado && p.Cadete.Id == id) * 500;
+    }
+
     public void darAltaPedido()
     {
         Console.WriteLine("-----ALTA DE PEDIDO-----");
@@ -48,37 +79,37 @@ public class Cadeteria
 
         Pedido pedido = new Pedido(observacion, nombre, direccion, telefono, referenciaDireccion);
 
-        listaPedidosNuevos.Add(pedido);
+        listaPedidos.Add(pedido);
 
     }
 
     public void informeDelDia()
     {
 
-        int pedidosRecibidos = listaCadetes.Sum(cadete => cadete.ListaPedidos.Count) + listaPedidosNuevos.Count;
-        int pedidosEntregados = listaCadetes.Sum(pedidos => pedidos.ListaPedidos.Count(pedido => pedido.Estado == Estado.Entregado));
+        int pedidosRecibidos = listaPedidos.Count;
+        int pedidosEntregados = listaPedidos.Count(p => p.Estado == Estado.Entregado);
 
         Console.WriteLine($"Cantidad de pedidos recibidos: {pedidosRecibidos}");
         Console.WriteLine($"Cantidad de pedidos entregados: {pedidosEntregados}");
 
         int contador = 1;
         int totalCobrarCadetes = 0;
-        int cantTotalEnvios = 0;
+
         Console.WriteLine("Monto ganado y la cantidad de envíos de cada cadete: ");
         foreach (var cadete in listaCadetes)
         {
             Console.WriteLine($"---{contador}.{cadete.Nombre}---");
-            Console.WriteLine($"Monto: {cadete.JornalACobrar()}");
-            int envios = cadete.ListaPedidos.Count(p => p.Estado == Estado.Entregado);
+            int monto = JornalACobrar(cadete.Id);
+            Console.WriteLine($"Monto: {monto}");
+            int envios = monto / 500;
             Console.WriteLine($"Cantidad de envios: {envios}");
 
             contador++;
-            totalCobrarCadetes += cadete.JornalACobrar();
-            cantTotalEnvios += envios;
+            totalCobrarCadetes += monto;
+
         }
 
-        int promedioEnvios = cantTotalEnvios / listaCadetes.Count;
-
+        int promedioEnvios = pedidosEntregados / listaCadetes.Count;
 
         Console.WriteLine("----------");
         Console.WriteLine($"Monto total: {totalCobrarCadetes}");
@@ -86,96 +117,44 @@ public class Cadeteria
 
     }
 
-    public void asignarPedido()
+    public void asignarCadeteAPedido(int idCadete, int nroPedido)
     {
+        Cadete cadete = listaCadetes.FirstOrDefault(c => c.Id == idCadete);
+        Pedido pedido = listaPedidos.FirstOrDefault(p => p.Nro == nroPedido && p.Cadete is null && p.Estado == Estado.Preparacion);
 
-        Console.WriteLine("Lista de pedidos no asignados: ");
-        if (listaPedidosNuevos.Count == 0)
+        if (cadete is not null && pedido is not null)
         {
-            Console.WriteLine("No hay pedidos");
+            pedido.agregarCadete(cadete);
+            pedido.CambiarEstado(Estado.enCamino);
+            Console.WriteLine("Cadete asignado a Pedido correctamente");
         }
         else
         {
-            int cantPedidos = 1;
-            foreach (var pedido in listaPedidosNuevos)
-            {
-                Console.WriteLine($"{cantPedidos}. Pedido numero: {pedido.Nro}");
-                cantPedidos++;
-            }
-
-            Console.WriteLine("Lista de cadetes: ");
-            int cantCadetes = 1;
-            foreach (var cadete in listaCadetes)
-            {
-                Console.WriteLine($"{cantCadetes}. {cadete.Nombre} ID: {cadete.Id}");
-                cantCadetes++;
-            }
-
-            int asignarPedido;
-            do
-            {
-                Console.Write("Ingrese el numero de pedido que desea asignar: ");
-                asignarPedido = Convert.ToInt32(Console.ReadLine());
-            } while (!listaPedidosNuevos.Any(pedido => pedido.Nro == asignarPedido));
-
-            int asignarCadete;
-            do
-            {
-                Console.Write("Ingrese el ID del cadete a asignar el pedido: ");
-                asignarCadete = Convert.ToInt32(Console.ReadLine());
-            } while (!listaCadetes.Any(cadete => cadete.Id == asignarCadete));
-
-            Cadete cadete1 = listaCadetes.First(c => c.Id == asignarCadete);
-            Pedido pedidoNuevo = listaPedidosNuevos.First(p => p.Nro == asignarPedido);
-
-            cadete1.AgregarPedido(pedidoNuevo);
-            listaPedidosNuevos.Remove(pedidoNuevo);
-
+            Console.WriteLine("Hubo un error en la entrada.");
         }
-
 
 
     }
 
-    public void reAsignarPedido(int nro)
+    public void reAsignarPedido(int nroPedido, int idCadete)
     {
-        Cadete cadeteAsignado = listaCadetes.FirstOrDefault(c => c.ListaPedidos.Any(p => p.Nro == nro));
+        Pedido pedido = listaPedidos.FirstOrDefault(p => p.Nro == nroPedido && p.Cadete is not null && p.Estado == Estado.enCamino);
+        Cadete cadete = listaCadetes.FirstOrDefault(c => c.Id == idCadete);
 
-        if (cadeteAsignado != null)
+        if (cadete is not null && pedido is not null)
         {
-            Console.WriteLine("Lista de cadetes: ");
-            int cantCadetes = 1;
-            foreach (var cadete in listaCadetes)
-            {
-                Console.WriteLine($"{cantCadetes}. {cadete.Nombre} ID: {cadete.Id}");
-                cantCadetes++;
-            }
-
-            int asignarCadete;
-            do
-            {
-                Console.Write("Ingrese el ID del cadete a asignar el pedido: ");
-                asignarCadete = Convert.ToInt32(Console.ReadLine());
-            } while (!listaCadetes.Any(cadete => cadete.Id == asignarCadete));
-
-            Cadete cadeteNuevo = listaCadetes.FirstOrDefault(c => c.Id == asignarCadete);
-
-
-            Pedido pedidoReAsignado = cadeteAsignado.ListaPedidos.FirstOrDefault(p => p.Nro == nro);
-
-            cadeteNuevo.AgregarPedido(pedidoReAsignado);
-
-            cadeteAsignado.EliminarPedido(pedidoReAsignado);
-
+            pedido.agregarCadete(cadete);
+            Console.WriteLine("Cadete reasignado a Pedido correctamente");
         }
         else
         {
-            Console.WriteLine($@"El pedido nro ""{nro}"" no fue encontrado.");
+            Console.WriteLine("Hubo un error en la entrada.");
         }
+
     }
     public void cambiarEstadoPedido(int nro)
     {
-        Pedido pedido = (listaCadetes.SelectMany(c => c.ListaPedidos).FirstOrDefault(p => p.Nro == nro)) ?? listaPedidosNuevos.FirstOrDefault(p => p.Nro == nro);
+        Pedido pedido = listaPedidos.FirstOrDefault(p => p.Nro == nro);
 
         if (pedido is not null)
         {
@@ -190,18 +169,18 @@ public class Cadeteria
             {
                 case "1":
                     pedido.CambiarEstado(Estado.Entregado);
+                    Console.WriteLine("Estado cambiado correctamente.");
                     break;
 
                 case "2":
                     pedido.CambiarEstado(Estado.Cancelado);
-                    if (listaPedidosNuevos.Remove(pedido))
+                    if (listaPedidos.Remove(pedido))
                     {
-                        Console.WriteLine("El pedido fue eliminado de la lista de nuevos pedidos.");
-                    }else
+                        Console.WriteLine("El pedido fue eliminado de la lista de pedidos.");
+                    }
+                    else
                     {
-                        Cadete cadete = listaCadetes.FirstOrDefault(c => c.ListaPedidos.Contains(pedido));
-                        cadete.ListaPedidos.Remove(pedido);
-                        Console.WriteLine("El pedido fue eliminado de la lista de pedidos del cadete.");
+                        Console.WriteLine("Hubo un error");
                     }
                     break;
 
@@ -209,13 +188,33 @@ public class Cadeteria
                     Console.WriteLine("Respuesta no valida.");
                     break;
             }
-        }else
+        }
+        else
         {
             Console.WriteLine("Pedido no encontrado.");
         }
 
+    }
 
+    public void listarCadetes()
+    {
+        Console.WriteLine("Lista de cadetes: ");
+        foreach (var cadete in listaCadetes)
+        {
+            Console.WriteLine($"{cadete.Id}. {cadete.Nombre}");
+        }
+    }
 
+    public void listarPedidos(Estado estado)
+    {
+        Console.WriteLine("Lista de pedidos: ");
+        foreach (var pedido in listaPedidos)
+        {
+            if (pedido.Estado == estado)
+            {
+                Console.WriteLine($"Pedido numero: {pedido.Nro}.");
+            }
 
+        }
     }
 }

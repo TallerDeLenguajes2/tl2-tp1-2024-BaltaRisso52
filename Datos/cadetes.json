@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "nombre": "balta",
+        "direccion": "barrio 120",
+        "telefono": "3816676655"
+    },
+    {
+        "id": 2,
+        "nombre": "neguilo",
+        "direccion": "barrio piloto",
+        "telefono": "3816666810"
+    }
+]

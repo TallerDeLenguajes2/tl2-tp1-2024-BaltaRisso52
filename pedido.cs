@@ -14,6 +14,7 @@ public class  Pedido{
     private string obs;
     private Cliente cliente;
     private Estado estado;
+    private Cadete cadete;
 
     public Pedido(string obs, string nombre, string direccion, string telefono, string datosReferenciaDireccion)
     {
@@ -21,10 +22,16 @@ public class  Pedido{
         this.obs = obs;
         this.cliente = new Cliente(nombre, direccion, telefono, datosReferenciaDireccion);
         this.estado = Estado.Preparacion;
+        this.cadete = null;
     }
 
     public Estado Estado { get => estado;}
     public int Nro { get => nro;}
+    public Cadete Cadete { get => cadete; }
+
+    public void agregarCadete(Cadete cadete){
+        this.cadete = cadete;
+    }
 
     
     public void VerDireccionCliente(){

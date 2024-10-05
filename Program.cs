@@ -1,16 +1,42 @@
-﻿string opcion;
+﻿using CargaDatos;
 
-Cadeteria cadeteriaNueva = cargarDatos.cargarCadeteria("Datos/Cadeteria.csv");
+string opcion;
 
-if (cadeteriaNueva != null)
+ICargarDatos acceso;
+Cadeteria cadeteriaNueva = null;
+List<Cadete> cadetes = null;
+
+Console.WriteLine("--- Seleccionar Tipo ---");
+Console.WriteLine("1.CSV");
+Console.WriteLine("2.JSON");
+Console.Write("Respuesta: ");
+string opcionDato = Console.ReadLine();
+
+switch (opcionDato)
+{
+    case "1":
+        acceso = new ArchivoCsv();
+        cadeteriaNueva = acceso.cargarCadeteria("Datos/Cadeteria.csv");
+        break;
+    case "2":
+        acceso = new ArchivoJson();
+        cadeteriaNueva = acceso.cargarCadeteria("Datos/Cadeteria.json");
+        cadetes = acceso.cargarCadetes("Datos/cadetes.json");
+        cadeteriaNueva.agregarCadetes(cadetes);
+        break;
+    default:
+        cadeteriaNueva = null;
+        break;
+}
+
+if (cadeteriaNueva != null && cadetes != null)
 {
     bool salir = true;
     while (salir)
     {
-        //Console.Clear();
         Console.WriteLine("-----MENU-----");
         Console.WriteLine("1.Dar de alta pedidos");
-        Console.WriteLine("2.Asignar pedido a cadete");
+        Console.WriteLine("2.Asignar cadete a pedido");
         Console.WriteLine("3.Cambiar de estado un pedido");
         Console.WriteLine("4.Reasignar pedido a otro cadete");
         Console.WriteLine("5.Informe");
@@ -24,19 +50,38 @@ if (cadeteriaNueva != null)
                 break;
 
             case "2":
-                cadeteriaNueva.asignarPedido();
+
+                if (cadeteriaNueva.ListaPedidos.Any(p => p.Estado == Estado.Preparacion))
+                {
+                    cadeteriaNueva.listarPedidos(Estado.Preparacion);
+                    cadeteriaNueva.listarCadetes();
+                    Console.Write("Ingrese el numero de pedido: ");
+                    int nroPedido = Convert.ToInt32(Console.ReadLine());
+                    Console.Write("Ingrese el ID del cadete: ");
+                    int cadeteId = Convert.ToInt32(Console.ReadLine());
+                    cadeteriaNueva.asignarCadeteAPedido(cadeteId, nroPedido);
+                }
+                else
+                {
+                    Console.WriteLine("No hay pedidos nuevos.");
+                }
+
                 break;
 
             case "3":
                 Console.Write("Ingrese el numero del pedido: ");
-                int nroPedido = Convert.ToInt32(Console.ReadLine());
-                cadeteriaNueva.cambiarEstadoPedido(nroPedido);
+                int nroPedido2 = Convert.ToInt32(Console.ReadLine());
+                cadeteriaNueva.cambiarEstadoPedido(nroPedido2);
                 break;
 
             case "4":
+                cadeteriaNueva.listarPedidos(Estado.enCamino);
+                cadeteriaNueva.listarCadetes();
                 Console.Write("Ingrese el numero del pedido: ");
-                int nro = Convert.ToInt32(Console.ReadLine());
-                cadeteriaNueva.reAsignarPedido(nro);
+                int nroPedido3 = Convert.ToInt32(Console.ReadLine());
+                Console.Write("Ingrese el ID del cadete: ");
+                int cadeteId2 = Convert.ToInt32(Console.ReadLine());
+                cadeteriaNueva.reAsignarPedido(nroPedido3, cadeteId2);
                 break;
 
             case "5":
