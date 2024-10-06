@@ -22,7 +22,7 @@ switch (opcionDato)
         acceso = new ArchivoJson();
         cadeteriaNueva = acceso.cargarCadeteria("Datos/Cadeteria.json");
         cadetes = acceso.cargarCadetes("Datos/cadetes.json");
-        cadeteriaNueva.agregarCadetes(cadetes);
+        cadeteriaNueva.ListaCadetes = cadetes;
         break;
     default:
         cadeteriaNueva = null;
@@ -46,20 +46,33 @@ if (cadeteriaNueva != null && cadetes != null)
         switch (opcion)
         {
             case "1":
-                cadeteriaNueva.darAltaPedido();
+                Console.WriteLine("-----ALTA DE PEDIDO-----");
+
+                string nombre = validarEntrada.leerEntradaConValidacion("Ingrese el nombre del cliente: ", "El nombre no puede estar vacío o contener solo espacios. Inténtelo de nuevo.");
+
+                string telefono = validarEntrada.leerEntradaConValidacion("Ingrese el telefono del cliente: ", "El telefono no puede estar vacío o contener solo espacios. Inténtelo de nuevo.");
+
+                string direccion = validarEntrada.leerEntradaConValidacion("Ingrese la direccion del cliente: ", "La direccion no puede estar vacío o contener solo espacios. Inténtelo de nuevo.");
+
+                string referenciaDireccion = validarEntrada.leerEntradaConValidacion("Ingrese referencia de la direccion del cliente: ", "No puede estar vacío o contener solo espacios. Inténtelo de nuevo.");
+
+                string observacion = validarEntrada.leerEntradaConValidacion("Observacion: ", "No puede estar vacío o contener solo espacios. Inténtelo de nuevo.");
+
+                cadeteriaNueva.darAltaPedido(observacion,nombre,direccion,telefono,referenciaDireccion);
                 break;
 
             case "2":
 
                 if (cadeteriaNueva.ListaPedidos.Any(p => p.Estado == Estado.Preparacion))
                 {
-                    cadeteriaNueva.listarPedidos(Estado.Preparacion);
-                    cadeteriaNueva.listarCadetes();
+                    Console.WriteLine(cadeteriaNueva.listarPedidos(Estado.Preparacion));
+                    
+                    Console.WriteLine(cadeteriaNueva.listarCadetes());
                     Console.Write("Ingrese el numero de pedido: ");
                     int nroPedido = Convert.ToInt32(Console.ReadLine());
                     Console.Write("Ingrese el ID del cadete: ");
                     int cadeteId = Convert.ToInt32(Console.ReadLine());
-                    cadeteriaNueva.asignarCadeteAPedido(cadeteId, nroPedido);
+                    Console.WriteLine(cadeteriaNueva.asignarCadeteAPedido(cadeteId, nroPedido));
                 }
                 else
                 {
@@ -71,21 +84,27 @@ if (cadeteriaNueva != null && cadetes != null)
             case "3":
                 Console.Write("Ingrese el numero del pedido: ");
                 int nroPedido2 = Convert.ToInt32(Console.ReadLine());
-                cadeteriaNueva.cambiarEstadoPedido(nroPedido2);
+                Console.WriteLine("Cambiar estado del pedido a: ");
+                Console.WriteLine("1.Entregado");
+                Console.WriteLine("2.Cancelado");
+                Console.Write("Respuesta: ");
+                string estado = Console.ReadLine();
+                Console.WriteLine(cadeteriaNueva.cambiarEstadoPedido(nroPedido2, estado));
                 break;
 
             case "4":
-                cadeteriaNueva.listarPedidos(Estado.enCamino);
-                cadeteriaNueva.listarCadetes();
+                Console.WriteLine(cadeteriaNueva.listarPedidos(Estado.Preparacion));
+                Console.WriteLine(cadeteriaNueva.listarCadetes());
                 Console.Write("Ingrese el numero del pedido: ");
                 int nroPedido3 = Convert.ToInt32(Console.ReadLine());
                 Console.Write("Ingrese el ID del cadete: ");
                 int cadeteId2 = Convert.ToInt32(Console.ReadLine());
-                cadeteriaNueva.reAsignarPedido(nroPedido3, cadeteId2);
+                Console.WriteLine(cadeteriaNueva.reAsignarPedido(nroPedido3, cadeteId2));
                 break;
 
             case "5":
-                cadeteriaNueva.informeDelDia();
+                string informe = cadeteriaNueva.informeDelDia();
+                Console.WriteLine(informe);
                 break;
 
             case "6":
